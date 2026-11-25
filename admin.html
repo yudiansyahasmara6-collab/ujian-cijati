@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<title>Dasbor Admin – Ujian SMP Islam Cijati</title>
+<style>
+:root{--g:#0b4f3f;--au:#b8892b;--bg:#eef2f0;--ink:#13211d;--ln:#c4d0cb;--card:#fff;--soft:var(--soft);--mut:#456}
+[data-tema=biru]{--g:#1d4e89;--au:#e0a800;--bg:#edf2f8;--ink:#12202e;--ln:#c3d0df;--soft:#dde8f5;--mut:#456}
+[data-tema=ungu]{--g:#5b2a86;--au:#d19a2b;--bg:#f3eff7;--ink:#241a2e;--ln:#d3c8de;--soft:#e8dff2;--mut:#564a63}
+[data-tema=cokelat]{--g:#7a4a21;--au:#c9972b;--bg:#f6f0e8;--ink:#2b2018;--ln:#dccdb9;--soft:#efe2d0;--mut:#6a5a48}
+[data-tema=gelap]{--g:#1d8a72;--au:#d9a73c;--bg:#0f1b19;--ink:#e6f0ed;--ln:#2d4540;--card:#17272a;--soft:#1d3a35;--mut:#9fb5af}
+body.ujian header{display:none}
+@media print{:root{--bg:#fff;--ink:#000;--card:#fff;--soft:#eee;--ln:#999;--mut:#333}}
+*{box-sizing:border-box}
+body{margin:0;font:16px/1.5 Georgia,'Times New Roman',serif;background:var(--bg);color:var(--ink)}
+header{background:var(--g);color:#fff;padding:14px 16px;text-align:center;border-bottom:4px solid var(--au)}
+header h1{margin:0;font-size:1.2rem}header small{opacity:.85}
+main{max-width:980px;margin:auto;padding:12px}
+footer{text-align:center;font-size:.8rem;padding:16px;color:var(--mut)}
+.card{background:var(--card);border:1px solid var(--ln);border-radius:10px;padding:16px;margin:12px 0}
+input,select,button{font:inherit;padding:10px;border:1px solid var(--ln);border-radius:8px;width:100%;margin:4px 0}
+button{background:var(--g);color:#fff;border:0;cursor:pointer;width:auto;padding:10px 16px}
+button:focus-visible,input:focus-visible{outline:3px solid var(--au)}
+button.s{background:#5b6b66}button.d{background:#a32222}button.o{background:var(--card);color:var(--g);border:1px solid var(--g)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.row>*{flex:1;min-width:110px}.row>button{flex:0 0 auto}
+.opt{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--ln);border-radius:8px;padding:10px;margin:8px 0;cursor:pointer}
+.opt.on{background:var(--soft);border-color:var(--g)}.opt input{width:auto;margin:4px 0 0}
+.nav{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}.nav button{width:40px;padding:6px 0;background:var(--card);color:var(--ink);border:1px solid var(--ln)}
+.nav button.dn{background:var(--g);color:#fff}.nav button.cur{outline:3px solid var(--au)}
+.bar{display:flex;justify-content:space-between;gap:8px;position:sticky;top:0;background:var(--card);border-bottom:2px solid var(--au);padding:10px;z-index:5}
+#vUjian{user-select:none;-webkit-user-select:none}
+#warn{position:fixed;inset:0;background:#000d;display:flex;align-items:center;justify-content:center;z-index:9;padding:20px}
+#warn div{background:var(--card);border-radius:12px;padding:20px;max-width:420px;text-align:center}
+.tb{overflow:auto;max-height:50vh}table{border-collapse:collapse;width:100%;font:13px system-ui,sans-serif}
+td,th{border:1px solid var(--ln);padding:4px 6px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left}
+th{background:var(--soft);position:sticky;top:0}
+textarea{font:inherit;width:100%;padding:10px;border:1px solid var(--ln);border-radius:8px;margin:8px 0;user-select:text;-webkit-user-select:text}
+[hidden]{display:none!important}
+#cetakWrap{display:none}
+@media print{body>*:not(#cetakWrap){display:none!important}#cetakWrap{display:block!important;font:12pt system-ui,sans-serif}td,th{white-space:normal!important;max-width:none!important;overflow:visible!important}}
+</style></head><body>
+<header><img id="logo" src="logo.png" alt="Logo SMP Islam Cijati" onerror="this.remove()" style="height:56px;display:block;margin:0 auto 6px"><h1>Dasbor Admin · Ujian SMP Islam Cijati</h1><small>Pemantauan, rekap, koreksi esai, dan data</small><div style="margin-top:6px"><select id="tema" onchange="setTema(this.value)" aria-label="Pilih tema tampilan" style="width:auto;padding:4px 8px;margin:0;font-size:.85rem"><option value="hijau">Tema: Hijau</option><option value="biru">Tema: Biru</option><option value="ungu">Tema: Ungu</option><option value="cokelat">Tema: Cokelat</option><option value="gelap">Tema: Gelap</option></select></div></header>
+<main>
+<section id="vLogin"><div class="card"><h2>Masuk Admin / Guru</h2>
+ <input id="ap" type="password" placeholder="Password admin" onkeydown="if(event.key==='Enter')loginAdmin()">
+ <button onclick="loginAdmin()">Masuk</button></div></section>
+<section id="vApp" hidden>
+ <div class="card"><div id="sel" class="row">
+  <select id="ujSel" onchange="renderAll()"></select><select id="klsSel" onchange="renderAll()"></select>
+  <button class="o" onclick="muat().catch(e=>alert(e.message))">Muat ulang</button>
+  <label style="flex:0 0 auto"><input type="checkbox" id="auto" onchange="autoRef()" style="width:auto"> Otomatis 15 detik</label></div>
+  <div class="row" id="tabsT" style="margin-top:8px"></div></div>
+
+ <div id="tPantau"><div class="card"><button class="o" onclick="finalisasi()">Nilai otomatis sesi yang waktunya sudah habis</button></div><div class="row" id="sum"></div>
+  <div class="card"><b>Pemantauan siswa</b><div class="tb" id="pantau"></div></div>
+  <div class="card"><b>Aktivitas pelanggaran terbaru</b><div class="tb" id="logf"></div></div></div>
+
+ <div id="tRekap" hidden><div class="card"><div class="row"><label style="flex:0 0 auto">KKM</label><input id="kkm" type="number" value="70" style="max-width:90px" oninput="rRekap()">
+  <button class="o" onclick="unduhRekap()">Ekspor CSV</button><button class="o" onclick="unduhRekapX()">Ekspor Excel</button><button class="o" onclick="pdfRekap()">PDF</button><button class="o" onclick="cetak('rekapArea')">Cetak</button></div></div>
+  <div class="card" id="rekapArea"><h3>Rekap nilai per kelas</h3><div class="tb" id="rk"></div><h3>Nilai per siswa</h3><div class="tb" id="rs"></div></div></div>
+
+ <div id="tEsai" hidden><div class="card"><div class="row"><label style="flex:0 0 auto"><input type="checkbox" id="onlyNew" onchange="rEsai()" style="width:auto"> Hanya yang belum dinilai</label><button onclick="simpanEsai()">Simpan penilaian</button></div></div><div id="esaiList"></div></div>
+
+ <div id="tHadir" hidden><div class="card"><button onclick="cetak('prev')">Cetak daftar hadir</button> <button class="o" onclick="pdfHadir()">Unduh PDF</button></div><div class="card" id="prev"></div></div>
+
+ <div id="tAnalisis" hidden><div class="card"><div class="row"><button class="o" onclick="unduhAnlX()">Ekspor Excel</button><button class="o" onclick="pdfAnalisis()">PDF</button></div>
+ <p>Persentase benar per soal: 70% atau lebih = mudah, 30–69% = sedang, di bawah 30% = sulit. Soal sulit, atau pengecoh yang dipilih banyak siswa, perlu ditinjau ulang.</p></div><div class="card"><div class="tb" id="anl"></div></div></div>
+ <div id="tCetak" hidden><div class="card"><h3>Cetak PDF</h3><p>Berlaku untuk ujian dan kelas yang dipilih di bagian atas.</p>
+  <div style="display:grid;gap:8px"><button onclick="pdfLembar()">Lembar hasil per siswa (1 halaman per siswa)</button><button class="o" onclick="pdfRekap()">Rekap nilai</button><button class="o" onclick="pdfHadir()">Daftar hadir</button><button class="o" onclick="pdfKartu()">Kartu peserta (NIS dan password)</button><button class="o" onclick="pdfAnalisis()">Analisis butir soal</button></div></div></div>
+ <div id="tData" hidden>
+  <div class="card"><div class="row" id="tabs"></div></div>
+  <div class="card" id="form"></div>
+  <div class="card"><div class="row" id="aksi"></div><p id="msg"></p><div class="tb" id="tbl"></div></div>
+  <div class="card" id="info"><b>Judul di halaman beranda siswa</b> (ganti sesuai ujian yang berlangsung)<input id="inNama" maxlength="100" placeholder="Misal: Penilaian Akhir Semester Ganjil 2026/2027"><input id="inSub" maxlength="120" placeholder="Teks kecil di bawah judul (opsional)"><button onclick="simpanInfo()">Simpan judul</button></div>
+  <div class="card" id="akun"><b>Akun dan sistem</b><div class="row"><button class="o" onclick="gantiAdmin()">Ganti password admin</button><button class="o" onclick="ujiBeban()">Uji beban login</button></div></div>
+  <div class="card" id="upl"><b>Unggah gambar soal</b> (disimpan di Google Drive; salin URL ke kolom <i>gambar</i>)
+   <input type="file" id="img" accept="image/*" onchange="unggah(this)"><input id="imgurl" readonly placeholder="URL gambar muncul di sini" onclick="this.select()"></div>
+ </div>
+</section>
+</main>
+<div id="cetakWrap"></div>
+<footer>© SMP Islam Cijati · Pengembang: Yudiansyah</footer>
+<script>
+const API_URL='https://script.google.com/macros/s/AKfycbxyTWQ_uXv9zIvsS2OzJZJ4zJaKVuKH1yRDJbKpgF3tJWxoBfqQoJlmyIea4tThICJRkA/exec';
+const TEMA_DEFAULT='hijau';
+function setTema(t){document.documentElement.dataset.tema=t==='hijau'?'':t;try{localStorage.setItem('tema',t)}catch(e){}const s=document.getElementById('tema');if(s)s.value=t}
+setTema((()=>{try{return localStorage.getItem('tema')}catch(e){return null}})()||TEMA_DEFAULT);
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+async function api(o){const r=await fetch(API_URL,{method:'POST',body:JSON.stringify(o)});const j=await r.json();if(!j.ok)throw new Error(j.error);return j}
+const PANELS=['Pantau','Rekap','Esai','Hadir','Analisis','Cetak','Data'];
+let D=null,AP='',TB='Pantau',tmr=null;
+$('tabsT').innerHTML=PANELS.map(p=>`<button class="o" onclick="tab('${p}')">${p}</button>`).join('');
+const TBL=(h,r)=>'<table><tr>'+h.map(x=>`<th>${x}</th>`).join('')+'</tr>'+r.map(c=>'<tr>'+c.map(x=>`<td>${x}</td>`).join('')+'</tr>').join('')+'</table>';
+const same=(a,b)=>String(a)===String(b);
+function unduh(nama,head,R){const q=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
+  const c='\uFEFF'+[head.map(q).join(',')].concat(R.map(r=>r.map(q).join(','))).join('\r\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([c],{type:'text/csv'}));a.download=nama;a.click()}
+function cetak(id){$('cetakWrap').innerHTML=$(id).innerHTML;window.print()}
+
+async function loginAdmin(){AP=$('ap').value;try{await muat();muatInfo();$('vLogin').hidden=true;$('vApp').hidden=false;tab('Pantau')}catch(e){alert(e.message)}}
+async function muat(){
+  D=await api({a:'a_dash',admin:AP});DET={};
+  const su=$('ujSel').value,sk=$('klsSel').value;
+  $('ujSel').innerHTML=D.ujian.map(u=>`<option value="${esc(u.id)}">${esc(u.judul)} · ${esc(u.mapel)} · ${esc(u.kelas)}</option>`).join('');
+  $('klsSel').innerHTML='<option value="">Semua kelas</option>'+[...new Set(D.siswa.map(s=>s.kelas))].sort().map(x=>`<option>${esc(x)}</option>`).join('');
+  if(su)$('ujSel').value=su;if(sk)$('klsSel').value=sk;
+  renderAll();
+}
+function tab(n){TB=n;PANELS.forEach(x=>$('t'+x).hidden=x!==n);$('sel').hidden=n==='Data';if(n==='Data')bukaSh(A.sh);else renderAll()}
+function autoRef(){clearInterval(tmr);if($('auto').checked)tmr=setInterval(()=>{if(TB==='Pantau'||TB==='Rekap'||TB==='Hadir')muat().catch(()=>{})},15000)}
+const U=()=>D&&D.ujian.find(u=>same(u.id,$('ujSel').value));
+function target(){
+  const u=U();if(!u)return[];const k=$('klsSel').value,uk=String(u.kelas).toLowerCase();
+  return D.siswa.filter(s=>(uk==='semua'||uk===String(s.kelas).toLowerCase())&&(!k||s.kelas===k))
+    .sort((a,b)=>String(a.kelas).localeCompare(b.kelas)||String(a.nama).localeCompare(b.nama));
+}
+function st(s,u){
+  const h=D.hasil.find(x=>same(x.nis,s.nis)&&same(x.ujian,u.id)),e=D.sesi.find(x=>same(x.nis,s.nis)&&same(x.ujian,u.id));
+  if(h)return{t:'Selesai',p:Number(h.pelanggaran)||0,n:Number(h.nilai),h:1,hadir:1,ket:h.status};
+  if(e){const r=Number(u.durasi)*60-Math.floor((Date.now()-Number(e.mulai))/1000);
+    return{t:r>0?`Mengerjakan (sisa ${Math.ceil(r/60)} mnt)`:'Waktu habis, belum kirim',p:Number(e.pelanggaran)||0,hadir:1,go:r>0}}
+  return{t:'Belum mulai',p:0,hadir:0};
+}
+function renderAll(){if(D&&U()){rPantau();rRekap();rEsai();rHadir();if(TB==='Analisis')rAnalisis()}else if(D){['sum','pantau','logf','rk','rs','esaiList','prev'].forEach(i=>$(i).innerHTML='<p>Belum ada data ujian.</p>')}}
+
+function rPantau(){
+  const u=U(),T=target().map(s=>({s,x:st(s,u)})),c=f=>T.filter(f).length;
+  $('sum').innerHTML=[['Terdaftar',T.length],['Belum mulai',c(o=>!o.x.hadir)],['Mengerjakan',c(o=>o.x.go)],['Selesai',c(o=>o.x.h)],['Pelanggaran ≥ '+D.max,c(o=>o.x.p>=D.max)]]
+    .map(([a,b])=>`<div class="card" style="text-align:center"><b style="font-size:1.6rem">${b}</b><br>${a}</div>`).join('');
+  T.sort((a,b)=>(b.x.go?1:0)-(a.x.go?1:0)||b.x.p-a.x.p);
+  $('pantau').innerHTML=TBL(['NIS','Nama','Kelas','Status','Pelanggaran','Nilai',''],T.map(({s,x})=>[esc(s.nis),esc(s.nama),esc(s.kelas),esc(x.t),
+    x.p>=D.max?`<b style="color:#a32222">${x.p}</b>`:x.p,x.h?x.n:'-',x.hadir?`<button class="d" style="padding:2px 8px" onclick="resetS('${esc(s.nis)}')">Reset</button>`:'']));
+  const nm={};D.siswa.forEach(s=>nm[s.nis]=s.nama);
+  $('logf').innerHTML=TBL(['Waktu','Siswa','Kejadian'],D.log.filter(l=>same(l.ujian,u.id)).slice(0,40).map(l=>[esc(l.waktu),esc(nm[l.nis]||l.nis),esc(l.kejadian)]));
+}
+async function resetS(nis){
+  if(!confirm('Reset siswa ini? Sesi, nilai, dan jawaban esainya dihapus agar bisa mengulang ujian.'))return;
+  try{await api({a:'a_reset',admin:AP,nis,ujian:U().id});await muat()}catch(e){alert(e.message)}
+}
+
+let RS=[];
+function rRekap(){
+  const u=U(),kkm=Number($('kkm').value)||70;
+  RS=target().map(s=>{const x=st(s,u);return{s,x,n:x.h?x.n:null,pend:D.esai.filter(e=>same(e.nis,s.nis)&&same(e.ujian,u.id)&&e.skor==='').length}});
+  const by={};RS.forEach(r=>(by[r.s.kelas]=by[r.s.kelas]||[]).push(r));
+  $('rk').innerHTML=TBL(['Kelas','Siswa','Sudah mengerjakan','Rata-rata','Tertinggi','Terendah','Tuntas (≥ KKM)'],Object.keys(by).sort().map(k=>{
+    const N=by[k].filter(r=>r.n!==null).map(r=>r.n),t=N.filter(n=>n>=kkm).length;
+    return[esc(k),by[k].length,N.length,N.length?(N.reduce((a,b)=>a+b,0)/N.length).toFixed(1):'-',N.length?Math.max(...N):'-',N.length?Math.min(...N):'-',N.length?`${t} (${Math.round(t/N.length*100)}%)`:'-']}));
+  $('rs').innerHTML=TBL(['Kelas','NIS','Nama','Nilai','Ket.','Esai belum dinilai','Pelanggaran'],RS.map(r=>[esc(r.s.kelas),esc(r.s.nis),esc(r.s.nama),r.n===null?'-':r.n,r.n===null?'-':r.n>=kkm?'Tuntas':'Remedial',r.pend||'',r.x.p]));
+}
+function unduhRekap(){const kkm=Number($('kkm').value)||70;
+  unduh(`rekap-${U().id}.csv`,['kelas','nis','nama','nilai','keterangan','esai_belum_dinilai','pelanggaran'],RS.map(r=>[r.s.kelas,r.s.nis,r.s.nama,r.n===null?'':r.n,r.n===null?'':r.n>=kkm?'Tuntas':'Remedial',r.pend,r.x.p]))}
+
+function so(id){return D.soalEsai.find(s=>same(s.id,id))||{pertanyaan:'(soal sudah dihapus)',bobot:1}}
+function rEsai(){
+  const u=U(),only=$('onlyNew').checked,ids=new Set(target().map(s=>String(s.nis)));
+  const L=D.esai.filter(e=>same(e.ujian,u.id)&&ids.has(String(e.nis))&&(!only||e.skor===''));
+  $('esaiList').innerHTML=L.length?L.map(e=>{const b=Number(so(e.soal).bobot)||1;
+    return`<div class="card"><b>${esc(e.nama)} · ${esc(e.kelas)}</b><p><i>${esc(so(e.soal).pertanyaan)}</i></p><p style="white-space:pre-wrap;background:var(--soft);padding:8px;border-radius:8px">${esc(e.jawaban)||'(kosong)'}</p>Skor (maks ${b}): <input type="number" min="0" max="${b}" step="0.5" style="width:90px" data-n="${esc(e.nis)}" data-s="${esc(e.soal)}" value="${esc(e.skor)}"></div>`}).join(''):'<div class="card">Tidak ada jawaban esai.</div>';
+}
+async function simpanEsai(){
+  const items=[...document.querySelectorAll('#esaiList input')].filter(i=>i.value!=='').map(i=>({nis:i.dataset.n,soal:i.dataset.s,ujian:U().id,skor:i.value}));
+  if(!items.length)return alert('Belum ada skor yang diisi.');
+  try{await api({a:'a_esai',admin:AP,items});alert('Penilaian tersimpan dan nilai akhir dihitung ulang.');await muat()}catch(e){alert(e.message)}
+}
+
+function rHadir(){
+  const u=U(),T=target(),tg=new Date().toLocaleDateString('id-ID',{dateStyle:'full'});
+  $('prev').innerHTML=`<h3 style="text-align:center;margin:0">DAFTAR HADIR UJIAN<br>SMP ISLAM CIJATI</h3><p>Ujian: ${esc(u.judul)}<br>Mata pelajaran: ${esc(u.mapel)}<br>Kelas: ${esc($('klsSel').value||u.kelas)}<br>Tanggal: ${tg}</p>`+
+    TBL(['No','NIS','Nama','Kelas','Kehadiran','Tanda tangan'],T.map((s,i)=>[i+1,esc(s.nis),esc(s.nama),esc(s.kelas),st(s,u).hadir?'Hadir':'',' <div style="height:26px;min-width:110px"></div>']))+
+    '<p style="margin-top:28px;text-align:right">Pengawas: ................................</p>';
+}
+
+/* ================= ADMIN ================= */
+let A={sh:'Siswa',h:[],rows:[]};
+const TABS2=['Siswa','Soal','Ujian','Hasil','Sesi','Esai','Jawaban','Log'],RO=['Hasil','Log','Esai','Jawaban'];
+async function bukaSh(n){
+  try{const j=await api({a:'a_get',admin:AP,sh:n});A={sh:n,h:j.header,rows:j.rows};render();return true}
+  catch(e){alert(e.message);return false}
+}
+function render(){
+  $('tabs').innerHTML=TABS2.map(t=>`<button class="${t===A.sh?'':'o'}" onclick="bukaSh('${t}')">${t}</button>`).join('');
+  const ro=RO.includes(A.sh);
+  $('form').hidden=ro;$('upl').hidden=A.sh!=='Soal';
+  $('form').innerHTML=ro?'':`<b>Tambah baris ${A.sh}</b><div class="row">`+A.h.map(k=>`<input id="f_${k}" placeholder="${k}">`).join('')+`</div><button onclick="tambah()">Tambah</button>`;
+  $('aksi').innerHTML=(ro?'':`<button onclick="simpan()">Simpan ke Sheet</button><label class="o" style="cursor:pointer;padding:10px;border:1px solid var(--g);border-radius:8px;text-align:center">Impor Excel/CSV<input type="file" accept=".csv,.txt,.xlsx,.xls" hidden onchange="impor(this)"></label>`)+
+    `<button class="o" onclick="ekspor()">Ekspor CSV</button><button class="o" onclick="eksporX()">Ekspor Excel</button>`+(A.sh==='Siswa'?`<button class="o" onclick="pwAcak()">Buat password acak</button>`:'')+(A.sh==='Soal'||A.sh==='Hasil'?`<button class="o" onclick="cadangan()">Cadangkan ke GitHub</button>`:'');
+  $('msg').textContent=`${A.rows.length} baris`+(ro?' (hanya baca)':' · perubahan baru tersimpan setelah menekan Simpan ke Sheet');
+  $('tbl').innerHTML=`<table><tr>${ro?'':'<th></th>'}${A.h.map(k=>`<th>${k}</th>`).join('')}</tr>`+
+    A.rows.slice(0,300).map((r,i)=>`<tr>${ro?'':`<td><button class="d" style="padding:2px 8px" onclick="A.rows.splice(${i},1);render()">×</button></td>`}${A.h.map(k=>`<td title="${esc(r[k])}">${esc(r[k])}</td>`).join('')}</tr>`).join('')+'</table>'+(A.rows.length>300?'<p>Menampilkan 300 baris pertama; semua baris tetap tersimpan/terekspor.</p>':'');
+}
+function tambah(){const o={};A.h.forEach(k=>o[k]=$('f_'+k).value.trim());if(!o[A.h[0]])return alert('Kolom pertama wajib diisi.');A.rows.push(o);render()}
+async function simpan(){
+  if(!confirm(`Timpa sheet ${A.sh} dengan ${A.rows.length} baris ini?`))return;
+  try{await api({a:'a_set',admin:AP,sh:A.sh,rows:A.rows});alert('Tersimpan.')}catch(e){alert(e.message)}
+}
+function parseCSV(t){
+  t=t.replace(/^\uFEFF/,'');const d=(t.split('\n')[0].match(/;/g)||[]).length>(t.split('\n')[0].match(/,/g)||[]).length?';':',';
+  const R=[];let c=[],f='',q=false;
+  for(let i=0;i<t.length;i++){const ch=t[i];
+    if(q){if(ch==='"'){if(t[i+1]==='"'){f+='"';i++}else q=false}else f+=ch}
+    else if(ch==='"')q=true;else if(ch===d){c.push(f);f=''}
+    else if(ch==='\n'||ch==='\r'){if(ch==='\r'&&t[i+1]==='\n')i++;c.push(f);R.push(c);c=[];f=''}
+    else f+=ch}
+  if(f!==''||c.length){c.push(f);R.push(c)}
+  return R.filter(r=>r.some(x=>x.trim()!==''));
+}
+function ekspor(){
+  const q=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
+  const csv='\uFEFF'+[A.h.map(q).join(',')].concat(A.rows.map(r=>A.h.map(k=>q(r[k])).join(','))).join('\r\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download=`${A.sh}.csv`;a.click();
+}
+async function cadangan(){try{const j=await api({a:'a_backup',admin:AP});alert(j.msg)}catch(e){alert(e.message)}}
+function unggah(el){
+  const fl=el.files[0];if(!fl)return;
+  if(fl.size>3e6)return alert('Maksimal 3 MB per gambar.');
+  const rd=new FileReader();
+  rd.onload=async()=>{try{$('imgurl').value='Mengunggah…';
+    const j=await api({a:'a_upload',admin:AP,name:fl.name,mime:fl.type,data:rd.result.split(',')[1]});$('imgurl').value=j.url;$('imgurl').select()}catch(e){$('imgurl').value='';alert(e.message)}};
+  rd.readAsDataURL(fl);
+}
+
+/* ===== v2: Excel, PDF, analisis butir, akun, uji beban ===== */
+const {jsPDF}=window.jspdf;
+let DET={},ANL=[];
+const kk=()=>Number($('kkm').value)||70;
+const J=s=>{try{return JSON.parse(s)}catch(e){return {}}};
+const nrm=x=>String(x==null?'':x).trim().toLowerCase().replace(/\s+/g,' ');
+const tipeQ=q=>['esai','isian','bs'].includes(nrm(q.tipe))?nrm(q.tipe):'pg';
+function cekJ(q,j){const t=tipeQ(q),x=nrm(j);if(!x)return false;if(t==='isian')return String(q.kunci).split('|').some(k=>nrm(k)===x);if(t==='bs')return x[0]===nrm(q.kunci)[0];return x===nrm(q.kunci)}
+const lbl=(q,x,t)=>!nrm(x)?'(kosong)':t==='bs'?(nrm(x)[0]==='b'?'Benar':'Salah'):t==='pg'?`${String(x).toUpperCase()}. ${q[String(x).toUpperCase()]||''}`:String(x).split('|')[0];
+const tgl=()=>new Date().toLocaleDateString('id-ID',{dateStyle:'long'});
+async function detail(){const u=U();if(!DET[u.id])DET[u.id]=await api({a:'a_detail',admin:AP,ujian:u.id});return DET[u.id]}
+function daftarSoal(s,Dt){
+  const se=D.sesi.find(x=>same(x.nis,s.nis)&&same(x.ujian,U().id)),ids=se&&String(se.soalids||'')?String(se.soalids).split(','):null;
+  return Dt.soal.filter(q=>(nrm(q.kelas)==='semua'||nrm(q.kelas)===nrm(s.kelas))&&(!ids||ids.includes(String(q.id))));
+}
+
+/* --- Excel --- */
+function unduhX(nama,head,R,sh){const wb=XLSX.utils.book_new(),ws=XLSX.utils.aoa_to_sheet([head].concat(R));
+  ws['!cols']=head.map(h=>({wch:Math.max(10,Math.min(40,String(h).length+6))}));XLSX.utils.book_append_sheet(wb,ws,sh||'Data');XLSX.writeFile(wb,nama)}
+function eksporX(){unduhX(`${A.sh}.xlsx`,A.h,A.rows.map(r=>A.h.map(k=>r[k])),A.sh)}
+function impor(el){
+  const fl=el.files[0];if(!fl)return;const rd=new FileReader();el.value='';
+  if(/\.xlsx?$/i.test(fl.name)){rd.onload=()=>{const wb=XLSX.read(rd.result,{type:'array'});isiImpor(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,raw:false,defval:''}))};rd.readAsArrayBuffer(fl)}
+  else{rd.onload=()=>isiImpor(parseCSV(rd.result));rd.readAsText(fl,'utf-8')}
+}
+function isiImpor(R){
+  R=R.filter(r=>r.some(x=>String(x).trim()!==''));if(!R.length)return alert('File kosong.');
+  const hd=R.shift().map(x=>String(x).trim().toLowerCase()),miss=A.h.filter(k=>!hd.includes(k.toLowerCase()));
+  if(miss.length&&!confirm('Kolom tidak ditemukan: '+miss.join(', ')+'. Lanjutkan?'))return;
+  const n=R.map(r=>{const o={};A.h.forEach(k=>{const ix=hd.indexOf(k.toLowerCase());o[k]=ix<0?'':String(r[ix]==null?'':r[ix]).trim()});return o}).filter(o=>o[A.h[0]]);
+  A.rows=A.rows.concat(n);render();alert(`${n.length} baris ditambahkan. Tekan "Simpan ke Sheet" untuk menyimpan.`);
+}
+const hdRekap=['kelas','nis','nama','nilai','keterangan','esai_belum_dinilai','pelanggaran'];
+const bdRekap=()=>RS.map(r=>[r.s.kelas,r.s.nis,r.s.nama,r.n===null?'':r.n,r.n===null?'':r.n>=kk()?'Tuntas':'Remedial',r.pend,r.x.p]);
+function unduhRekapX(){unduhX(`rekap-${U().id}.xlsx`,hdRekap,bdRekap(),'Rekap')}
+function unduhAnlX(){unduhX(`analisis-${U().id}.xlsx`,['id','soal','jenis','responden','persen_benar','kategori','A','B','C','D','kosong'],ANL.map(a=>[a.q.id,a.q.pertanyaan,a.t,a.n,a.pct===null?'':a.pct,a.kat,a.dist.A,a.dist.B,a.dist.C,a.dist.D,a.dist['-']]),'Analisis')}
+
+/* --- PDF --- */
+let LOGOD=null,LOGOR=1;
+async function muatLogo(){try{const r=await fetch('logo.png');if(!r.ok)return;const b=await r.blob();LOGOD=await new Promise(ok=>{const f=new FileReader();f.onload=()=>ok(f.result);f.readAsDataURL(b)});const im=new Image();await new Promise(ok=>{im.onload=ok;im.onerror=ok;im.src=LOGOD});LOGOR=(im.width/im.height)||1}catch(e){LOGOD=null}}
+muatLogo();
+function kop(d,j){const w=d.internal.pageSize.getWidth();if(LOGOD){try{d.addImage(LOGOD,'PNG',14,6,15*LOGOR,15)}catch(e){}}d.setFont('helvetica','bold');d.setFontSize(14);d.text('SMP ISLAM CIJATI',w/2,14,{align:'center'});d.setFontSize(11);d.text(j,w/2,20,{align:'center'});d.setLineWidth(.6);d.line(14,23,w-14,23);d.setFont('helvetica','normal');d.setFontSize(10);return 29}
+function ttd(d,y,peran){const w=d.internal.pageSize.getWidth();if(y>250){d.addPage();y=30}d.setFont('helvetica','normal');d.setFontSize(10);d.text(peran,w-55,y,{align:'center'});d.text('( ................................ )',w-55,y+24,{align:'center'})}
+const infoU=(d,y,u)=>{d.text(`Ujian: ${u.judul} (${u.mapel})   Kelas: ${$('klsSel').value||u.kelas}   ${tgl()}`,14,y);return y+4};
+function kelasRows(){const by={};RS.forEach(r=>(by[r.s.kelas]=by[r.s.kelas]||[]).push(r));
+  return Object.keys(by).sort().map(k=>{const N=by[k].filter(r=>r.n!==null).map(r=>r.n),t=N.filter(n=>n>=kk()).length;
+    return[k,by[k].length,N.length,N.length?(N.reduce((a,b)=>a+b,0)/N.length).toFixed(1):'-',N.length?Math.max(...N):'-',N.length?Math.min(...N):'-',N.length?`${t} (${Math.round(t/N.length*100)}%)`:'-']})}
+function pdfRekap(){const u=U(),d=new jsPDF();let y=infoU(d,kop(d,'REKAP NILAI UJIAN'),u);
+  d.autoTable({startY:y,head:[['Kelas','Siswa','Mengerjakan','Rata-rata','Tertinggi','Terendah','Tuntas (KKM '+kk()+')']],body:kelasRows(),styles:{fontSize:9}});
+  d.autoTable({startY:d.lastAutoTable.finalY+6,head:[['No','Kelas','NIS','Nama','Nilai','Ket.']],body:RS.map((r,i)=>[i+1,r.s.kelas,r.s.nis,r.s.nama,r.n===null?'-':r.n,r.n===null?'-':r.n>=kk()?'Tuntas':'Remedial']),styles:{fontSize:9}});
+  ttd(d,d.lastAutoTable.finalY+14,'Guru Mata Pelajaran');d.save(`rekap-${u.id}.pdf`)}
+function pdfHadir(){const u=U(),d=new jsPDF();let y=infoU(d,kop(d,'DAFTAR HADIR UJIAN'),u);
+  d.autoTable({startY:y,head:[['No','NIS','Nama','Kelas','Kehadiran','Tanda tangan']],body:target().map((s,i)=>[i+1,s.nis,s.nama,s.kelas,st(s,u).hadir?'Hadir':'','']),styles:{fontSize:9,minCellHeight:9,valign:'middle'},columnStyles:{5:{cellWidth:42}}});
+  ttd(d,d.lastAutoTable.finalY+14,'Pengawas');d.save(`hadir-${u.id}.pdf`)}
+async function pdfLembar(){
+  const u=U(),Dt=await detail(),by={};Dt.jawaban.forEach(j=>by[j.nis]=J(j.jawab));const d=new jsPDF();let first=true;
+  target().forEach(s=>{const x=st(s,u);if(!x.h)return;if(!first)d.addPage();first=false;
+    const y=kop(d,'LEMBAR HASIL UJIAN');
+    [['Nama',s.nama],['NIS',s.nis],['Kelas',s.kelas],['Ujian',`${u.judul} (${u.mapel})`],['Tanggal cetak',tgl()],['Pelanggaran',x.p],['NILAI',x.n]].forEach(([a,b],i)=>{d.text(a,14,y+i*6);d.text(': '+b,45,y+i*6)});
+    const jw=by[s.nis]||{};
+    const body=daftarSoal(s,Dt).map((q,i)=>{const t=tipeQ(q),j=jw[q.id],p=String(q.pertanyaan).slice(0,80);
+      if(t==='esai'){const e=D.esai.find(z=>same(z.nis,s.nis)&&same(z.ujian,u.id)&&same(z.soal,q.id));return[i+1,p,String(j||'(kosong)').slice(0,100),'-',e&&e.skor!==''?`${e.skor}/${Number(q.bobot)||1}`:'belum dinilai']}
+      return[i+1,p,lbl(q,j,t).slice(0,60),lbl(q,q.kunci,t).slice(0,60),cekJ(q,j)?'Benar':'Salah']});
+    d.autoTable({startY:y+46,head:[['No','Soal','Jawaban siswa','Kunci','Hasil']],body,styles:{fontSize:8,overflow:'linebreak'},columnStyles:{0:{cellWidth:10},1:{cellWidth:62}}});
+    ttd(d,d.lastAutoTable.finalY+12,'Guru Mata Pelajaran')});
+  if(first)return alert('Belum ada siswa yang selesai pada pilihan ini.');d.save(`lembar-hasil-${u.id}.pdf`);
+}
+async function pdfKartu(){
+  const j=await api({a:'a_get',admin:AP,sh:'Siswa'}),k=$('klsSel').value;
+  const L=j.rows.filter(s=>!k||s.kelas===k).sort((a,b)=>String(a.kelas).localeCompare(b.kelas)||String(a.nama).localeCompare(b.nama));
+  if(!L.length)return alert('Tidak ada siswa.');const d=new jsPDF();
+  L.forEach((s,i)=>{if(i&&i%10===0)d.addPage();const p=i%10,x=10+(p%2)*100,y=10+Math.floor(p/2)*57;
+    d.setDrawColor(11,79,63);d.rect(x,y,95,52);d.setFont('helvetica','bold');d.setFontSize(10);d.text('KARTU PESERTA UJIAN',x+47.5,y+7,{align:'center'});
+    d.setFontSize(8);d.text('SMP ISLAM CIJATI',x+47.5,y+12,{align:'center'});d.line(x+3,y+14,x+92,y+14);d.setFont('helvetica','normal');d.setFontSize(9);
+    [['Nama',s.nama],['Kelas',s.kelas],['NIS',s.nis],['Password',s.password]].forEach(([a,b],n)=>{d.text(a,x+5,y+23+n*8);d.text(': '+String(b),x+27,y+23+n*8,{maxWidth:64})});
+    d.setFontSize(7);d.text('Rahasiakan password. Jujur adalah bagian dari iman.',x+47.5,y+49,{align:'center'})});
+  d.save('kartu-peserta.pdf');
+}
+
+/* --- analisis butir soal --- */
+async function rAnalisis(){
+  const u=U();if(!u)return;$('anl').textContent='Memuat…';
+  try{const Dt=await detail(),sel=target().filter(s=>st(s,u).h),by={};Dt.jawaban.forEach(j=>by[j.nis]=J(j.jawab));
+    ANL=Dt.soal.map(q=>{const t=tipeQ(q),w=Number(q.bobot)||1,R=sel.filter(s=>daftarSoal(s,Dt).some(x=>same(x.id,q.id)));
+      let ok=0,es=0,en=0;const dist={A:0,B:0,C:0,D:0,'-':0};
+      R.forEach(s=>{const j=(by[s.nis]||{})[q.id];
+        if(t==='esai'){const e=D.esai.find(z=>same(z.nis,s.nis)&&same(z.ujian,u.id)&&same(z.soal,q.id));if(e&&e.skor!==''){es+=Number(e.skor)/w;en++}}
+        else{if(cekJ(q,j))ok++;if(t==='pg'){const k=String(j||'').toUpperCase();dist[dist[k]!==undefined?k:'-']++}}});
+      const pct=t==='esai'?(en?Math.round(es/en*100):null):(R.length?Math.round(ok/R.length*100):null);
+      return{q,t,n:R.length,pct,kat:pct===null?'-':pct>=70?'Mudah':pct>=30?'Sedang':'Sulit',dist}});
+    $('anl').innerHTML=TBL(['ID','Soal','Jenis','Responden','% benar','Kategori','A','B','C','D','Kosong'],ANL.map(a=>[esc(a.q.id),esc(String(a.q.pertanyaan).slice(0,70)),a.t,a.n,a.pct===null?'-':a.pct+'%',a.kat,
+      ...['A','B','C','D','-'].map(k=>a.t==='pg'?(String(a.q.kunci).toUpperCase()===k?`<b>${a.dist[k]}</b>`:a.dist[k]):'')]));
+  }catch(e){$('anl').textContent=e.message}
+}
+async function pdfAnalisis(){await rAnalisis();const u=U(),d=new jsPDF('l');let y=infoU(d,kop(d,'ANALISIS BUTIR SOAL'),u);
+  d.autoTable({startY:y,head:[['ID','Soal','Jenis','N','% benar','Kategori','A','B','C','D','Kosong']],body:ANL.map(a=>[a.q.id,String(a.q.pertanyaan).slice(0,90),a.t,a.n,a.pct===null?'-':a.pct+'%',a.kat,a.dist.A,a.dist.B,a.dist.C,a.dist.D,a.dist['-']]),styles:{fontSize:8}});
+  d.save(`analisis-${u.id}.pdf`)}
+
+/* --- akun & sistem --- */
+async function finalisasi(){try{const j=await api({a:'a_final',admin:AP});alert(`${j.n} sesi kedaluwarsa dinilai otomatis.`);await muat()}catch(e){alert(e.message)}}
+function pwAcak(){
+  const semua=confirm('OK = buat password baru untuk SEMUA siswa.\nBatal = hanya untuk siswa yang password-nya kosong.'),ch='abcdefghjkmnpqrstuvwxyz23456789';let n=0;
+  const g=()=>Array.from(crypto.getRandomValues(new Uint8Array(6)),v=>ch[v%ch.length]).join('');
+  A.rows.forEach(r=>{if(semua||!String(r.password||'').trim()){r.password=g();n++}});render();alert(`${n} password dibuat. Tekan "Simpan ke Sheet", lalu cetak Kartu Peserta di tab Cetak.`);
+}
+async function gantiAdmin(){
+  const a=prompt('Password admin baru (minimal 8 karakter):');if(!a)return;if(a!==prompt('Ulangi password baru:'))return alert('Tidak sama.');
+  try{await api({a:'a_pass',admin:AP,baru:a});AP=a;alert('Password admin diganti.')}catch(e){alert(e.message)}
+}
+async function ujiBeban(){
+  const n=Number(prompt('Jumlah login serentak yang disimulasikan (misal 30):','30'));if(!n)return;
+  try{const j=await api({a:'a_get',admin:AP,sh:'Siswa'}),s=j.rows[0];if(!s)return alert('Isi data siswa dulu.');
+    const t0=Date.now(),L=[];let ok=0;
+    await Promise.all(Array.from({length:n},async()=>{const t=Date.now();try{await api({a:'login',nis:s.nis,pw:s.password});ok++}catch(e){}L.push(Date.now()-t)}));
+    alert(`Berhasil ${ok} dari ${n}.\nRata-rata ${Math.round(L.reduce((a,b)=>a+b,0)/L.length)} ms, terlama ${Math.max(...L)} ms.\nJika rata-rata di atas 5000 ms atau ada yang gagal, bagi ujian menjadi beberapa gelombang.`)}catch(e){alert(e.message)}
+}
+async function muatInfo(){try{const j=await api({a:'info'});$('inNama').value=j.nama||'';$('inSub').value=j.sub||''}catch(e){}}
+async function simpanInfo(){try{await api({a:'a_info',admin:AP,nama:$('inNama').value.trim(),sub:$('inSub').value.trim()});alert('Judul beranda diperbarui. Siswa melihatnya saat memuat ulang halaman.')}catch(e){alert(e.message)}}
+</script></body></html>

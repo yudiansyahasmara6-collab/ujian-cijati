@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="id"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ujian Online – SMP Islam Cijati</title>
+<style>
+:root{--g:#0b4f3f;--au:#b8892b;--bg:#eef2f0;--ink:#13211d;--ln:#c4d0cb;--card:#fff;--soft:var(--soft);--mut:#456}
+[data-tema=biru]{--g:#1d4e89;--au:#e0a800;--bg:#edf2f8;--ink:#12202e;--ln:#c3d0df;--soft:#dde8f5;--mut:#456}
+[data-tema=ungu]{--g:#5b2a86;--au:#d19a2b;--bg:#f3eff7;--ink:#241a2e;--ln:#d3c8de;--soft:#e8dff2;--mut:#564a63}
+[data-tema=cokelat]{--g:#7a4a21;--au:#c9972b;--bg:#f6f0e8;--ink:#2b2018;--ln:#dccdb9;--soft:#efe2d0;--mut:#6a5a48}
+[data-tema=gelap]{--g:#1d8a72;--au:#d9a73c;--bg:#0f1b19;--ink:#e6f0ed;--ln:#2d4540;--card:#17272a;--soft:#1d3a35;--mut:#9fb5af}
+body.ujian header{display:none}
+@media print{:root{--bg:#fff;--ink:#000;--card:#fff;--soft:#eee;--ln:#999;--mut:#333}}
+*{box-sizing:border-box}
+body{margin:0;font:16px/1.5 Georgia,'Times New Roman',serif;background:var(--bg);color:var(--ink)}
+header{background:var(--g);color:#fff;padding:14px 16px;text-align:center;border-bottom:4px solid var(--au)}
+header h1{margin:0;font-size:1.2rem}header small{opacity:.85}
+main{max-width:980px;margin:auto;padding:12px}
+footer{text-align:center;font-size:.8rem;padding:16px;color:var(--mut)}
+.card{background:var(--card);border:1px solid var(--ln);border-radius:10px;padding:16px;margin:12px 0}
+input,select,button{font:inherit;padding:10px;border:1px solid var(--ln);border-radius:8px;width:100%;margin:4px 0}
+button{background:var(--g);color:#fff;border:0;cursor:pointer;width:auto;padding:10px 16px}
+button:focus-visible,input:focus-visible{outline:3px solid var(--au)}
+button.s{background:#5b6b66}button.d{background:#a32222}button.o{background:var(--card);color:var(--g);border:1px solid var(--g)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.row>*{flex:1;min-width:110px}.row>button{flex:0 0 auto}
+.opt{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--ln);border-radius:8px;padding:10px;margin:8px 0;cursor:pointer}
+.opt.on{background:var(--soft);border-color:var(--g)}.opt input{width:auto;margin:4px 0 0}
+.nav{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}.nav button{width:40px;padding:6px 0;background:var(--card);color:var(--ink);border:1px solid var(--ln)}
+.nav button.dn{background:var(--g);color:#fff}.nav button.cur{outline:3px solid var(--au)}
+.bar{display:flex;justify-content:space-between;gap:8px;position:sticky;top:0;background:var(--card);border-bottom:2px solid var(--au);padding:10px;z-index:5}
+#vUjian{user-select:none;-webkit-user-select:none}
+#warn{position:fixed;inset:0;background:#000d;display:flex;align-items:center;justify-content:center;z-index:9;padding:20px}
+#warn div{background:var(--card);border-radius:12px;padding:20px;max-width:420px;text-align:center}
+.tb{overflow:auto;max-height:50vh}table{border-collapse:collapse;width:100%;font:13px system-ui,sans-serif}
+td,th{border:1px solid var(--ln);padding:4px 6px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left}
+th{background:var(--soft);position:sticky;top:0}
+textarea{font:inherit;width:100%;padding:10px;border:1px solid var(--ln);border-radius:8px;margin:8px 0;user-select:text;-webkit-user-select:text}
+[hidden]{display:none!important}
+</style></head><body>
+<header><img id="logo" src="logo.png" alt="Logo SMP Islam Cijati" onerror="this.remove()" style="height:68px;display:block;margin:0 auto 6px"><h1 id="jdl">Ujian Online SMP Islam Cijati</h1><small id="sub">Jujur adalah bagian dari iman</small><div style="margin-top:6px"><select id="tema" onchange="setTema(this.value)" aria-label="Pilih tema tampilan" style="width:auto;padding:4px 8px;margin:0;font-size:.85rem"><option value="hijau">Tema: Hijau</option><option value="biru">Tema: Biru</option><option value="ungu">Tema: Ungu</option><option value="cokelat">Tema: Cokelat</option><option value="gelap">Tema: Gelap</option></select></div></header>
+<main>
+
+<section id="vLogin">
+ <div class="card"><h2>Masuk Siswa</h2>
+  <input id="nis" placeholder="NIS" inputmode="numeric" autocomplete="off">
+  <input id="pw" type="password" placeholder="Password">
+  <button onclick="loginSiswa()">Masuk</button> <button class="o" onclick="cekHP()">Cek perangkat</button></div>
+</section>
+
+<section id="vPilih" hidden>
+ <div class="card"><h2 id="hai"></h2>
+ <p>Aturan: ujian berjalan layar penuh. Pindah tab, keluar layar penuh, atau menyalin soal dicatat sebagai pelanggaran dan dapat menghentikan ujian otomatis.</p></div>
+ <div id="daftar"></div>
+ <button class="s" onclick="location.reload()">Keluar</button>
+</section>
+
+<section id="vUjian" hidden>
+ <div class="bar"><b id="jd"></b><span id="info"></span><b id="tm"></b></div>
+ <div class="card" id="soal"></div>
+ <div class="row"><button class="s" onclick="gerak(-1)">Sebelumnya</button><button onclick="gerak(1)">Berikutnya</button><button class="d" onclick="kirim(false)">Kirim Jawaban</button></div>
+ <div class="nav" id="nav"></div>
+</section>
+<div id="warn" hidden><div><h3>Peringatan</h3><p id="wmsg"></p><button onclick="balik()">Kembali ke ujian</button></div></div>
+
+<section id="vHasil" hidden><div class="card"><h2>Jawaban terkirim</h2><p id="hs"></p><div id="rv"></div><button onclick="location.reload()">Selesai</button></div></section>
+
+</main>
+<footer>© SMP Islam Cijati · Pengembang: Yudiansyah</footer>
+
+<script>
+const API_URL='https://script.google.com/macros/s/AKfycbxyTWQ_uXv9zIvsS2OzJZJ4zJaKVuKH1yRDJbKpgF3tJWxoBfqQoJlmyIea4tThICJRkA/exec';
+const TEMA_DEFAULT='hijau';
+function setTema(t){document.documentElement.dataset.tema=t==='hijau'?'':t;try{localStorage.setItem('tema',t)}catch(e){}const s=document.getElementById('tema');if(s)s.value=t}
+setTema((()=>{try{return localStorage.getItem('tema')}catch(e){return null}})()||TEMA_DEFAULT);
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const VIEWS=['vLogin','vPilih','vUjian','vHasil'];
+const show=v=>{VIEWS.forEach(x=>$(x).hidden=x!==v);document.body.classList.toggle('ujian',v==='vUjian')};
+async function api(o){
+  const r=await fetch(API_URL,{method:'POST',body:JSON.stringify(o)});
+  const j=await r.json(); if(!j.ok) throw new Error(j.error); return j;
+}
+
+/* ================= SISWA ================= */
+let S={},E=null;
+const cred=()=>({nis:S.nis,pw:S.pw});
+async function cekHP(){
+  const r=['Layar penuh: '+(document.documentElement.requestFullscreen?'didukung':'TIDAK didukung (keluar layar penuh tidak bisa dipantau)')];
+  try{localStorage.setItem('cek','1');r.push('Penyimpanan: OK')}catch(e){r.push('Penyimpanan: GAGAL (matikan mode privat)')}
+  const t=Date.now();try{await api({a:'ping'});r.push('Server: OK ('+(Date.now()-t)+' ms)')}catch(e){r.push('Server: GAGAL, periksa internet atau API_URL')}
+  r.push('Peramban: '+navigator.userAgent.slice(0,70));alert(r.join('\n'));
+}
+async function simpanSrv(){if(!E||E.done||!E.dirty)return;E.dirty=false;try{await api({a:'simpan',...cred(),ujian:E.id,jawab:E.jawab})}catch(e){E.dirty=true}}
+async function loginSiswa(){
+  try{
+    const pw=$('pw').value, j=await api({a:'login',nis:$('nis').value.trim(),pw});
+    S={...j.siswa,pw};
+    $('hai').textContent=`${S.nama} · Kelas ${S.kelas}`;
+    $('daftar').innerHTML=j.ujian.length?j.ujian.map(u=>`<div class="card"><b>${esc(u.judul)}</b><br>${esc(u.mapel)} · ${esc(u.durasi)} menit<br>`+
+      (u.status==='buka'?`<button onclick="mulai('${esc(u.id)}')">Mulai ujian</button>`:u.status==='selesai'?'Sudah dikerjakan':'Status: '+u.status)+'</div>'):'<div class="card">Belum ada ujian untuk kelas Anda.</div>';
+    show('vPilih');
+  }catch(e){alert(e.message)}
+}
+function rng(seed){let a=0;for(const c of seed)a=(a*31+c.charCodeAt(0))>>>0;return()=>{a=(a+0x6D2B79F5)>>>0;let t=a;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296}}
+function acak(arr,r){const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+async function mulai(id){
+  if(!confirm('Mulai ujian sekarang? Waktu langsung berjalan.'))return;
+  try{
+    const f=document.documentElement.requestFullscreen;
+    if(f) await document.documentElement.requestFullscreen().catch(()=>{});
+    const j=await api({a:'mulai',...cred(),ujian:id});
+    const r=rng(S.nis+id);
+    let soal=j.soal.map(s=>({id:s.id,q:s.q,img:s.img,tipe:s.tipe,opts:s.tipe==='esai'||s.tipe==='isian'?[]:s.tipe==='bs'?[{k:'B',t:'Benar'},{k:'S',t:'Salah'}]:['A','B','C','D'].filter(k=>String(s[k]||'')!=='').map(k=>({k,t:s[k]}))}));
+    if(j.acak){soal=acak(soal,r);soal.forEach(s=>{if(s.tipe!=='bs')s.opts=acak(s.opts,r)})}
+    const key=`ans_${S.nis}_${id}`;
+    let jw={...(j.tersimpan||{})};try{Object.assign(jw,JSON.parse(localStorage.getItem(key)||'{}'))}catch(e){}
+    E={id,soal,jawab:jw,i:0,key,end:Date.now()+j.sisa*1000,pel:j.pel,max:j.max,last:0,done:false,fs:!!f};
+    $('jd').textContent=j.judul;show('vUjian');tampil();info();
+    E.tm=setInterval(tik,1000);tik();E.sv=setInterval(simpanSrv,45000+Math.random()*15000);
+  }catch(e){alert(e.message)}
+}
+function tik(){
+  const s=Math.max(0,Math.round((E.end-Date.now())/1000));
+  $('tm').textContent=String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
+  if(s<=0)kirim(true);
+}
+function info(){$('info').textContent=`Pelanggaran ${E.pel}/${E.max}`}
+function tampil(){
+  const s=E.soal[E.i],cur=E.jawab[s.id];
+  $('soal').innerHTML=`<p><b>Soal ${E.i+1} dari ${E.soal.length}</b></p><p>${esc(s.q).replace(/\n/g,'<br>')}</p>`+
+   (s.img?`<img src="${esc(s.img)}" alt="Gambar soal" draggable="false" style="max-width:100%;border-radius:8px">`:'')+
+   (s.tipe==='isian'?`<input id="es" maxlength="200" placeholder="Ketik jawaban singkat" autocomplete="off" value="${esc(cur||'')}" oninput="isi(this.value)">`:'')+(s.tipe==='esai'?`<textarea id="es" rows="8" maxlength="3000" placeholder="Tulis jawaban Anda di sini (tempel dinonaktifkan)" oninput="isi(this.value)">${esc(cur||'')}</textarea>`:'')+s.opts.map((o,n)=>`<label class="opt ${cur===o.k?'on':''}"><input type="radio" name="o" ${cur===o.k?'checked':''} onchange="pilih('${o.k}')"><span><b>${'ABCD'[n]}.</b> ${esc(o.t)}</span></label>`).join('');
+  navR()
+}
+function navR(){
+  $('nav').innerHTML=E.soal.map((x,n)=>`<button class="${E.jawab[x.id]?'dn':''} ${n===E.i?'cur':''}" onclick="E.i=${n};tampil()">${n+1}</button>`).join('');
+}
+function pilih(k){E.jawab[E.soal[E.i].id]=k;localStorage.setItem(E.key,JSON.stringify(E.jawab));E.dirty=true;tampil()}
+function isi(v){E.jawab[E.soal[E.i].id]=v;localStorage.setItem(E.key,JSON.stringify(E.jawab));E.dirty=true;navR()}
+function gerak(d){E.i=Math.min(E.soal.length-1,Math.max(0,E.i+d));tampil()}
+async function kirim(auto){
+  if(!E||E.done)return;
+  const kosong=E.soal.filter(s=>!E.jawab[s.id]).length;
+  if(!auto&&!confirm(kosong?`${kosong} soal belum dijawab. Tetap kirim?`:'Kirim jawaban sekarang?'))return;
+  E.done=true;
+  try{
+    const j=await api({a:'kirim',...cred(),ujian:E.id,jawab:E.jawab});
+    clearInterval(E.tm);clearInterval(E.sv);localStorage.removeItem(E.key);
+    if(document.fullscreenElement)document.exitFullscreen();
+    $('warn').hidden=true;
+    $('hs').textContent=j.esai?'Jawaban terkirim. Nilai akhir diumumkan setelah guru mengoreksi esai.':j.tampil?`Nilai Anda: ${j.nilai}`:'Nilai akan diumumkan oleh guru.';
+    $('rv').innerHTML=j.review?'<h3>Pembahasan</h3>'+j.review.map((r,i)=>`<div class="opt" style="display:block"><b>${i+1}.</b> ${esc(r.q)}<br>Jawaban Anda: ${esc(r.jt)} ${r.e?'':r.ok?'(benar)':'(salah)'}${r.e||r.ok?'':`<br>Kunci: ${esc(r.kt)}`}${r.p?`<br><i>${esc(r.p)}</i>`:''}</div>`).join(''):'';E=null;show('vHasil');
+  }catch(e){E.done=false;alert('Gagal mengirim: '+e.message+'. Periksa internet lalu tekan Kirim lagi.')}
+}
+async function lapor(k){
+  if(!E||E.done||Date.now()-E.last<2500)return;
+  E.last=Date.now();
+  $('wmsg').textContent=`Terdeteksi: ${k}. Kembali ke ujian sekarang.`;$('warn').hidden=false;
+  try{
+    const j=await api({a:'log',...cred(),ujian:E.id,kej:k});
+    E.pel=j.pelanggaran;info();
+    if(E.pel>=E.max){$('wmsg').textContent='Batas pelanggaran tercapai. Jawaban dikirim otomatis.';kirim(true)}
+  }catch(e){}
+}
+function balik(){$('warn').hidden=true;if(E&&E.fs&&!document.fullscreenElement)document.documentElement.requestFullscreen().catch(()=>{})}
+document.addEventListener('visibilitychange',()=>document.hidden&&lapor('pindah tab/aplikasi'));
+window.addEventListener('blur',()=>setTimeout(()=>E&&!document.hasFocus()&&lapor('jendela tidak aktif'),400));
+document.addEventListener('fullscreenchange',()=>E&&E.fs&&!document.fullscreenElement&&lapor('keluar layar penuh'));
+['contextmenu','copy','cut','paste','selectstart','dragstart'].forEach(v=>document.addEventListener(v,e=>E&&!(e.type==='selectstart'&&['TEXTAREA','INPUT'].includes(document.activeElement.tagName))&&e.preventDefault()));
+document.addEventListener('keydown',e=>{
+  if(!E)return;const k=e.key.toLowerCase(),c=e.ctrlKey||e.metaKey;
+  if(e.key==='F12'||e.key==='PrintScreen'||(c&&['c','v','x','u','s','p','a'].includes(k))||(c&&e.shiftKey&&['i','j','c'].includes(k)))e.preventDefault();
+});
+window.addEventListener('beforeunload',e=>{if(E&&!E.done){e.preventDefault();e.returnValue=''}});
+
+function pasangInfo(j){if(j.nama){$('jdl').textContent=j.nama;document.title=j.nama}if(j.sub)$('sub').textContent=j.sub}
+try{pasangInfo(JSON.parse(localStorage.getItem('info')||'{}'))}catch(e){}
+api({a:'info'}).then(j=>{pasangInfo(j);try{localStorage.setItem('info',JSON.stringify(j))}catch(e){}}).catch(()=>{});
+</script></body></html>
